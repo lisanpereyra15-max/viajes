@@ -114,7 +114,7 @@ input,select{
 
 <h2>Gestión de Viajes TrasLaDar</h2>
 
-<form>
+<form id="formViaje">
 
 <div class="grid-form">
 
@@ -125,7 +125,7 @@ input,select{
 
 <div class="input-group input-full">
 <label>Teléfono</label>
-<input type="tel" id="telefono" placeholder="Ej: 351xxxxxxx" required>
+<input type="tel" id="telefono" placeholder="Ej: 351xxxxxxxx" required>
 </div>
 
 <div class="input-group">
@@ -140,7 +140,7 @@ input,select{
 
 <div class="input-group">
 <label>Fecha</label>
-<input type="date" id="fecha">
+<input type="date" id="fecha" required>
 </div>
 
 <div class="input-group input-full">
@@ -151,9 +151,9 @@ input,select{
 </div>
 
 <div class="services-mix">
-<div class="service-option">👤<br><input type="number" id="p" value="1"></div>
-<div class="service-option">📦<br><input type="number" id="e" value="0"></div>
-<div class="service-option">🐾<br><input type="number" id="m" value="0"></div>
+<div class="service-option">👤<br><input type="number" id="p" value="1" min="0"></div>
+<div class="service-option">📦<br><input type="number" id="e" value="0" min="0"></div>
+<div class="service-option">🐾<br><input type="number" id="m" value="0" min="0"></div>
 </div>
 
 <button type="button" class="btn-ws" onclick="procesar()">Registrar Viaje</button>
@@ -165,51 +165,62 @@ input,select{
 </div>
 
 <script>
-const destinos=["Córdoba","Río Cuarto","Villa María","Carlos Paz","Buenos Aires"];
+const destinos = ["Córdoba","Río Cuarto","Villa María","Carlos Paz","Buenos Aires"];
 
-function cargar(){
+function cargarDestinos(){
     destinos.forEach(d=>{
-        origen.innerHTML+=`<option>${d}</option>`;
-        destino.innerHTML+=`<option>${d}</option>`;
+        origen.innerHTML += `<option value="${d}">${d}</option>`;
+        destino.innerHTML += `<option value="${d}">${d}</option>`;
     });
-    fecha.min=new Date().toISOString().split("T")[0];
+    fecha.min = new Date().toISOString().split("T")[0];
 }
-cargar();
+cargarDestinos();
 
 async function procesar(){
-const datos={
-nombre:nombre.value,
-telefono:telefono.value,
-fecha:fecha.value,
-origen:origen.value,
-destino:destino.value,
-vehiculo:vehiculo.value,
-pasajeros:p.value,
-encomiendas:e.value,
-mascotas:m.value
-};
+    const btn = document.querySelector(".btn-ws");
 
-if(!datos.nombre || !datos.telefono || !datos.fecha)
-return alert("Completá Nombre, Teléfono y Fecha");
+    const urlExcel = "https://script.google.com/macros/s/AKfycby1FXaI82VYs26X8iSYBdkqDtpol6eVFomxeVDc7chC7CFuIkygeiRBRkhP24-Ygola/exec";
 
-await fetch("TU_URL_DEL_SCRIPT",{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify(datos)
-});
+    const datos = {
+        nombre: nombre.value,
+        telefono: telefono.value,
+        fecha: fecha.value,
+        origen: origen.value,
+        destino: destino.value,
+        vehiculo: vehiculo.value,
+        pasajeros: p.value,
+        encomiendas: e.value,
+        mascotas: m.value
+    };
 
-let msj=`*NUEVO VIAJE*
-👤 ${datos.nombre}
-📞 ${datos.telefono}
-📅 ${datos.fecha}
-📍 ${datos.origen} → ${datos.destino}
-🚐 ${datos.vehiculo}
+    if(!datos.nombre || !datos.telefono || !datos.fecha || !datos.vehiculo){
+        alert("Completá todos los campos obligatorios");
+        return;
+    }
 
-Pasajeros: ${datos.pasajeros}
-Encomiendas: ${datos.encomiendas}
-Mascotas: ${datos.mascotas}`;
+    btn.disabled = true;
+    btn.innerText = "Guardando...";
 
-window.open(`https://wa.me/5493512832957?text=${encodeURIComponent(msj)}`);
+    try{
+        await fetch(urlExcel,{
+            method:"POST",
+            mode:"no-cors",
+            body:JSON.stringify(datos)
+        });
+
+        alert("✅ Viaje registrado correctamente");
+
+        document.getElementById("formViaje").reset();
+        p.value = 1;
+        e.value = 0;
+        m.value = 0;
+
+    }catch(err){
+        alert("❌ Error al guardar el viaje");
+    }finally{
+        btn.disabled = false;
+        btn.innerText = "Registrar Viaje";
+    }
 }
 </script>
 
