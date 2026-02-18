@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrasLaDar - Gestión de Viajes</title>
+    <title>TrasLaDar - Gestión Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --celeste: #82caff; 
-            --whatsapp: #25d366; 
-            --oscuro: #333; 
-            --blanco: #fff;
-        }
+        :root { --celeste: #82caff; --whatsapp: #25d366; --oscuro: #333; --blanco: #fff; }
         body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--celeste); display: flex; flex-direction: column; align-items: center; }
         .header-banner { width: 100%; height: 180px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
         .logo-img { max-width: 140px; background: white; padding: 10px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .container { max-width: 800px; width: 90%; margin-top: -30px; margin-bottom: 50px; }
         .main-card { background: var(--blanco); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        h2 { text-align: center; margin: 0 0 20px 0; font-size: 1.3rem; }
+        h2 { text-align: center; margin: 0 0 10px 0; font-size: 1.3rem; }
         .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; }
         label { font-size: 0.7rem; font-weight: 700; margin-bottom: 5px; color: #777; text-transform: uppercase; }
@@ -41,14 +36,20 @@
             <h2>Gestión de Viajes TrasLaDar</h2>
             <form id="formViaje">
                 <div class="grid-form">
-                    <div class="input-group"><label>Origen</label>
-                        <select id="origen"><option value="Córdoba">Córdoba</option><option value="Río Cuarto">Río Cuarto</option></select>
+                    <div class="input-group">
+                        <label>Origen</label>
+                        <select id="origen"></select> </div>
+                    <div class="input-group">
+                        <label>Destino</label>
+                        <select id="destino"></select> </div>
+                    <div class="input-group">
+                        <label>Fecha</label>
+                        <input type="date" id="fecha">
                     </div>
-                    <div class="input-group"><label>Destino</label>
-                        <select id="destino"><option value="Río Cuarto">Río Cuarto</option><option value="Córdoba">Córdoba</option></select>
+                    <div class="input-group input-full">
+                        <label>Vehículo / Chofer</label>
+                        <input type="text" id="vehiculo" placeholder="Ej: Sprinter Blanca - Juan" required>
                     </div>
-                    <div class="input-group"><label>Fecha</label><input type="date" id="fecha"></div>
-                    <div class="input-group input-full"><label>Vehículo / Chofer</label><input type="text" id="vehiculo" placeholder="Ej: Sprinter Blanca - Juan" required></div>
                 </div>
 
                 <div class="services-mix">
@@ -57,19 +58,39 @@
                     <div class="service-option"><label>🐾 Mascotas</label><br><input type="number" id="m" value="0" min="0"></div>
                 </div>
 
-                <button type="button" id="submitBtn" onclick="procesar()" class="btn-ws">Registrar Viaje en Excel</button>
+                <button type="button" id="submitBtn" onclick="procesar()" class="btn-ws">Registrar Viaje</button>
             </form>
         </div>
-        <div class="footer-info">Sistema de Gestión Interna - Lisandro</div>
+        <div class="footer-info">Sistema Escalable TrasLaDar - Lisandro</div>
     </div>
 
     <script>
-        // Setear fecha mínima hoy
+        // --- CONFIGURACIÓN DE DESTINOS ---
+        // Para agregar más, solo sumalos a esta lista entre comillas y separados por coma.
+        const misDestinos = ["Córdoba", "Río Cuarto", "Villa María", "Carlos Paz", "Buenos Aires"];
+
+        // Función para cargar los destinos en los selectores al abrir la página
+        function cargarDestinos() {
+            const origenSelect = document.getElementById('origen');
+            const destinoSelect = document.getElementById('destino');
+            
+            misDestinos.forEach(dest => {
+                let opt1 = document.createElement('option');
+                opt1.value = dest; opt1.innerText = dest;
+                origenSelect.appendChild(opt1);
+
+                let opt2 = document.createElement('option');
+                opt2.value = dest; opt2.innerText = dest;
+                destinoSelect.appendChild(opt2);
+            });
+        }
+
+        // Ejecutar carga al iniciar
+        cargarDestinos();
         document.getElementById('fecha').setAttribute('min', new Date().toISOString().split('T')[0]);
 
         async function procesar() {
             const btn = document.getElementById('submitBtn');
-            // Tu URL de Google Script ya integrada
             const urlExcel = "https://script.google.com/macros/s/AKfycby1FXaI82VYs26X8iSYBdkqDtpol6eVFomxeVDc7chC7CFuIkygeiRBRkhP24-Ygola/exec"; 
             
             const datos = {
@@ -82,37 +103,25 @@
                 mascotas: document.getElementById('m').value
             };
 
-            if (!datos.fecha || !datos.vehiculo) {
-                alert("Por favor, completa la Fecha y el Vehículo.");
-                return;
-            }
+            if (!datos.fecha || !datos.vehiculo) return alert("Completa Fecha y Vehículo");
 
             btn.disabled = true;
-            btn.innerText = "Guardando en Excel...";
+            btn.innerText = "Registrando...";
 
             try {
-                // Envío de datos al Google Sheets
-                await fetch(urlExcel, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(datos)
-                });
+                await fetch(urlExcel, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
                 
-                // Formatear mensaje para WhatsApp
                 let f = datos.fecha.split("-");
                 let fechaOk = `${f[2]}/${f[1]}/${f[0]}`;
-                let msj = `*NUEVO REGISTRO EN EXCEL*\n\n📅 *Fecha:* ${fechaOk}\n📍 *Ruta:* ${datos.origen} -> ${datos.destino}\n🚐 *Vehículo:* ${datos.vehiculo}\n\n*Detalle:* \n- Pasajeros: ${datos.pasajeros}\n- Encomiendas: ${datos.encomiendas}\n- Mascotas: ${datos.mascotas}`;
+                let msj = `*NUEVO REGISTRO*\n\n📅 *Fecha:* ${fechaOk}\n📍 *Ruta:* ${datos.origen} -> ${datos.destino}\n🚐 *Vehículo:* ${datos.vehiculo}\n\n*Carga:* \n- Pasajeros: ${datos.pasajeros}\n- Encomiendas: ${datos.encomiendas}\n- Mascotas: ${datos.mascotas}`;
                 
-                // Abrir WhatsApp y avisar éxito
                 window.open(`https://wa.me/5493512832957?text=${encodeURIComponent(msj)}`, '_blank');
-                alert("¡Datos guardados con éxito en la planilla!");
-                
+                alert("¡Guardado en Excel y WhatsApp enviado!");
             } catch (err) {
-                console.error(err);
-                alert("Error al conectar con el servidor. Revisa tu conexión.");
+                alert("Error al conectar");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Registrar Viaje en Excel";
+                btn.innerText = "Registrar Viaje";
             }
         }
     </script>
